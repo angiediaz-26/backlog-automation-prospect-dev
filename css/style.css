@@ -1,1 +1,89 @@
+/* --- VARIABLES GLOBALES --- */
+:root {
+    --bg-color: #FFFFFF;
+    --blue-dark: #121E6C;
+    --gray-plat: #E2E8F0;
+    --coral-accent: #FF2847;
+    --shadow-light: 0 4px 12px rgba(18, 30, 108, 0.04);
+    --font-main: 'Montserrat', sans-serif;
+    
+    /* Configuración del Timeline */
+    --timeline-min-width: 1400px; /* Responsividad Crítica */
+}
 
+/* --- RESET BÁSICO --- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-main); background-color: var(--bg-color); color: var(--blue-dark); overflow-x: hidden; }
+
+/* --- CONTROLES Y HEADER --- */
+.header-controls { display: flex; justify-content: space-between; align-items: center; padding: 24px 32px; border-bottom: 1px solid var(--gray-plat); background-color: var(--bg-color); position: relative; z-index: 50; }
+.logo-title { font-weight: 800; font-size: 24px; }
+.logo-title span { color: var(--coral-accent); }
+
+/* Toggle Switch UI */
+.toggle-container { display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 14px; }
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--gray-plat); transition: .4s; border-radius: 24px; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+input:checked + .slider { background-color: var(--coral-accent); }
+input:checked + .slider:before { transform: translateX(20px); }
+
+/* --- CONTENEDOR TIMELINE (Responsividad Crítica) --- */
+.roadmap-wrapper { width: 100%; overflow-x: auto; padding-bottom: 40px; }
+/* Ocultar barra de scroll en navegadores webkit para un look más limpio, pero permitiendo el scroll */
+.roadmap-wrapper::-webkit-scrollbar { height: 8px; }
+.roadmap-wrapper::-webkit-scrollbar-thumb { background: var(--gray-plat); border-radius: 4px; }
+.timeline-container { min-width: max(100%, var(--timeline-min-width)); position: relative; padding-top: 20px; }
+
+/* --- CABECERAS DE TIEMPO --- */
+.timeline-header { border-bottom: 2px solid var(--gray-plat); position: sticky; top: 0; background: var(--bg-color); z-index: 10; }
+.time-row { display: flex; width: 100%; }
+.time-cell { flex: 1; text-align: center; border-right: 1px solid var(--gray-plat); padding: 8px 0; font-size: 12px; font-weight: 600; }
+.time-cell:last-child { border-right: none; }
+
+/* Línea gruesa para Trimestres */
+.row-quarters .time-cell { border-right: 3px solid var(--blue-dark); font-weight: 800; font-size: 14px; text-transform: uppercase; }
+.row-quarters .time-cell:last-child { border-right: none; }
+.row-months .time-cell { font-weight: 700; color: #4A5568; }
+.row-weeks .time-cell { font-weight: 400; color: #718096; font-size: 11px; }
+
+/* --- LÍNEA DE HOY --- */
+.today-line { position: absolute; top: 0; bottom: 0; width: 2px; background-color: var(--coral-accent); z-index: 5; pointer-events: none; }
+.today-line::before { content: 'HOY'; position: absolute; top: -15px; left: -14px; background: var(--coral-accent); color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+
+/* --- BARRAS DE PROYECTO --- */
+.projects-area { position: relative; width: 100%; min-height: 400px; margin-top: 20px; }
+.project-row { position: relative; height: 50px; border-bottom: 1px dashed var(--gray-plat); width: 100%; }
+
+.project-bar {
+    position: absolute; height: 32px; top: 9px;
+    background-color: var(--blue-dark); color: white;
+    border-radius: 6px; box-shadow: var(--shadow-light);
+    display: flex; align-items: center; padding: 0 12px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: all 0.3s ease;
+    /* Evita que el texto desborde la barra si es muy pequeña */
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Estado Prod (Filtro y Opacidad) */
+.project-bar.estado-prod { opacity: 0.45; filter: grayscale(15%); }
+.project-bar.estado-prod:hover { opacity: 1; filter: grayscale(0%); z-index: 20; }
+
+/* --- VISTA CLÁSICA VS AVANZADA --- */
+.bar-content-classic, .bar-content-advanced { display: flex; align-items: center; width: 100%; justify-content: space-between; }
+.bar-content-advanced { display: none; } /* Oculto por defecto */
+.truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1; margin-right: 8px; }
+
+/* Píldora Dev (Clásica) */
+.dev-pill { background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 12px; font-size: 10px; flex-shrink: 0; }
+
+/* Burbujas Flotantes (Avanzada) */
+.floating-bubbles { position: absolute; top: -11px; right: -5px; display: flex; gap: 4px; z-index: 2; }
+.bubble { width: 22px; height: 22px; background: white; border: 1px solid var(--gray-plat); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--blue-dark); font-weight: 800; box-shadow: var(--shadow-light); transition: all 0.3s ease; }
+/* Expansión del Dev */
+.bubble.dev-initial { overflow: hidden; white-space: nowrap; width: 22px; }
+.project-bar:hover .bubble.dev-initial { width: auto; padding: 0 8px; border-radius: 11px; }
+.project-bar:hover .dev-full { display: inline; }
+.dev-full { display: none; font-size: 10px; margin-left: 4px; font-weight: 600; }
