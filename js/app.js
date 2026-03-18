@@ -66,4 +66,118 @@ function parseDateRobust(dateStr) {
     
     // 3. Cortamos SOLO los primeros 10 caracteres (YYYY-MM-DD). 
     // Esto elimina cualquier hora o zona horaria basura que envíe Sheets.
-    const cleanDate = str.substring(0, 10
+    const cleanDate = str.substring(0, 10);
+    
+    // 4. Retornamos la fecha forzando la hora a medianoche para evitar saltos de día
+    return new Date(`${cleanDate}T00:00:00`);
+}
+
+function calculateBarPosition(startDateStr, endDateStr) {
+    const start = parseDateRobust(startDateStr);
+    const end = parseDateRobust(endDateStr);
+    
+    const startDay = getDayOfYear(start);
+    const endDay = getDayOfYear(end);
+    
+    let leftPercent = (startDay / DAYS_IN_YEAR) * 100;
+    let widthPercent = ((endDay - startDay) / DAYS_IN_YEAR) * 100;
+
+    // Evitamos que las barras se salgan del contenedor visualmente
+    if (leftPercent < 0) leftPercent = 0;
+    if (widthPercent < 1) widthPercent = 1; 
+    
+    return { left: leftPercent, width: widthPercent };
+}
+
+// --- 4. RENDERIZAR PROYECTOS ---
+function renderProjects(data) {
+    projectsArea.innerHTML = '';
+    
+    // Filtramos para asegurarnos de que la fila tenga fecha de inicio y fin válidas
+    const validData = data.filter(item => item['FECHA INICIO'] && item['FECHA FIN']);
+
+    validData.forEach(item => {
+        const pos = calculateBarPosition(item['FECHA INICIO'], item['FECHA FIN']);
+        
+        const responsable = item.RESPONSABLE ? String(item.RESPONSABLE).trim() : 'Sin Asignar';
+        const inicialDev = responsable.charAt(0).toUpperCase();
+        const proceso = item.PROCESO ? String(item.PROCESO).trim() : 'Sin Título';
+        const estado = item.ESTADO ? String(item.ESTADO).trim() : 'Backlog';
+        const plataforma = item.PLATAFORMA ? String(item.PLATAFORMA).trim() : '-';
+        
+        const isProd = estado.toLowerCase() === 'prod';
+        const iconEstado = isProd ? '✓' : (estado.toLowerCase().includes('curso') ? '⚙' : '⏳');
+        
+        const row = document.createElement('div');
+        row.className = 'project-row';
+        
+        row.innerHTML = `
+            <div class="project-bar ${isProd ? 'estado-prod' : ''}" style="left: ${pos.left}%; width: ${pos.width}%;">
+                
+                <div class="bar-content-classic">
+                    <span class="truncate" title="${proceso}">${proceso}</span>
+                    <span class="dev-pill" title="${responsable}">${responsable}</span>
+                </div>
+
+                <div class="bar-content-advanced">
+                    <span class="truncate" title="${proceso}">${proceso}</span>
+                    <div class="floating-bubbles">
+                        <div class="bubble" title="Estado: ${estado}">${iconEstado}</div>
+                        <div class="bubble" title="Plataforma: ${plataforma}">${plataforma.charAt(0).toUpperCase()}</div>
+                        <div class="bubble dev-initial" title="Responsable">
+                            ${inicialDev}<span class="dev-full">${responsable.substring(1)}</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        `;
+        projectsArea.appendChild(row);
+    });
+
+    // Restaurar la vista seleccionada si el toggle está activo
+    const isAdvanced = viewToggle.checked;
+    toggleViews(isAdvanced);
+}
+
+// --- 5. TOGGLE VISTAS ---
+function toggleViews(isAdvanced) {
+    const classics = document.querySelectorAll('.bar-content-classic');
+    const advanced = document.querySelectorAll('.bar-content-advanced');
+    classics.forEach(el => el.style.display = isAdvanced ? 'none' : 'flex');
+    advanced.forEach(el => el.style.display = isAdvanced ? 'flex' : 'none');
+}
+
+viewToggle.addEventListener('change', (e) => {
+    toggleViews(e.target.checked);
+});
+
+// --- 6. LLAMADA REAL A LA API (FETCH) ---
+async function initRoadmap() {
+    renderTimelineHeaders();
+    positionTodayLine();
+
+    // TU URL OFICIAL DE PRODUCCIÓN
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxIIREskYhByQ1z6bH7G8IJNHnNfR2esJbhJhwho0UPEEVutqmftQGehcmM3nZHh3iY/exec';
+
+    try {
+        projectsArea.innerHTML = '<div style="padding: 20px; text-align: center; font-weight: 600; color: var(--blue-dark);">Cargando roadmap desde Sheets... 🚀</div>';
+
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error('Error en la red');
+        
+        const data = await response.json();
+        
+        // Debug para la consola (Presiona F12 en el navegador para verlo)
+        console.log("👀 DATOS RECIBIDOS DE SHEETS:", data);
+        
+        renderProjects(data);
+
+    } catch (error) {
+        console.error("Error cargando los datos:", error);
+        projectsArea.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--coral-accent); font-weight: 600;">Error al cargar los datos. Verifica la conexión o la URL en consola.</div>';
+    }
+}
+
+// Arrancamos
+initRoadmap();
