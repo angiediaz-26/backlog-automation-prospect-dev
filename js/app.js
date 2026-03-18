@@ -1,12 +1,15 @@
+// --- 1. CONFIGURACIÓN DEL TIMELINE (AÑO ACTUAL) ---
 const YEAR = new Date().getFullYear(); // 2026
 const IS_LEAP = (YEAR % 4 === 0 && YEAR % 100 !== 0) || (YEAR % 400 === 0);
 const DAYS_IN_YEAR = IS_LEAP ? 366 : 365;
 
+// DOM Elements
 const timelineHeader = document.getElementById('timelineHeader');
 const todayLine = document.getElementById('todayLine');
 const projectsArea = document.getElementById('projectsArea');
 const viewToggle = document.getElementById('viewToggle');
 
+// --- 2. RENDERIZAR CABECERAS (Q, Meses, Semanas) ---
 function renderTimelineHeaders() {
     const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
     const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -28,6 +31,7 @@ function renderTimelineHeaders() {
     timelineHeader.innerHTML = qHTML + mHTML + wHTML;
 }
 
+// --- 3. LÓGICA DE POSICIONAMIENTO MATEMÁTICO ---
 function getDayOfYear(date) {
     const start = new Date(date.getFullYear(), 0, 0);
     const diff = date - start;
@@ -46,122 +50,20 @@ function positionTodayLine() {
     }
 }
 
-// Parser de fechas para entender "18/03/2026" (DD/MM/YYYY) o "2026-03-18"
+// NUEVO: Parser de fechas a prueba de balas para Google Sheets
 function parseDateRobust(dateStr) {
     if (!dateStr) return new Date();
     
-    // Si la fecha viene como DD/MM/YYYY
-    if (String(dateStr).includes('/')) {
-        const parts = String(dateStr).split('/');
+    // 1. Lo convertimos a texto por seguridad y quitamos espacios
+    let str = String(dateStr).trim();
+    
+    // 2. Si por algún motivo llega con barras (DD/MM/YYYY), lo volteamos a YYYY-MM-DD
+    if (str.includes('/')) {
+        const parts = str.split('/');
         // parts[0] = DD, parts[1] = MM, parts[2] = YYYY
-        return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
+        str = `${parts[2]}-${parts[1]}-${parts[0]}`;
     }
     
-    // Si viene como YYYY-MM-DD
-    return new Date(dateStr + 'T00:00:00');
-}
-
-function calculateBarPosition(startDateStr, endDateStr) {
-    const start = parseDateRobust(startDateStr);
-    const end = parseDateRobust(endDateStr);
-    
-    const startDay = getDayOfYear(start);
-    const endDay = getDayOfYear(end);
-    
-    let leftPercent = (startDay / DAYS_IN_YEAR) * 100;
-    let widthPercent = ((endDay - startDay) / DAYS_IN_YEAR) * 100;
-
-    if (leftPercent < 0) leftPercent = 0;
-    if (widthPercent < 1) widthPercent = 1; 
-    
-    return { left: leftPercent, width: widthPercent };
-}
-
-function renderProjects(data) {
-    projectsArea.innerHTML = '';
-    
-    // Filtramos usando corchetes para aceptar los nombres con espacios
-    const validData = data.filter(item => item['FECHA INICIO'] && item['FECHA FIN']);
-
-    validData.forEach(item => {
-        const pos = calculateBarPosition(item['FECHA INICIO'], item['FECHA FIN']);
-        
-        const responsable = item.RESPONSABLE ? String(item.RESPONSABLE).trim() : 'Sin Asignar';
-        const inicialDev = responsable.charAt(0).toUpperCase();
-        const proceso = item.PROCESO ? String(item.PROCESO).trim() : 'Sin Título';
-        const estado = item.ESTADO ? String(item.ESTADO).trim() : 'Backlog';
-        const plataforma = item.PLATAFORMA ? String(item.PLATAFORMA).trim() : '-';
-        
-        const isProd = estado.toLowerCase() === 'prod';
-        const iconEstado = isProd ? '✓' : (estado.toLowerCase().includes('curso') ? '⚙' : '⏳');
-        
-        const row = document.createElement('div');
-        row.className = 'project-row';
-        
-        row.innerHTML = `
-            <div class="project-bar ${isProd ? 'estado-prod' : ''}" style="left: ${pos.left}%; width: ${pos.width}%;">
-                
-                <div class="bar-content-classic">
-                    <span class="truncate" title="${proceso}">${proceso}</span>
-                    <span class="dev-pill" title="${responsable}">${responsable}</span>
-                </div>
-
-                <div class="bar-content-advanced">
-                    <span class="truncate" title="${proceso}">${proceso}</span>
-                    <div class="floating-bubbles">
-                        <div class="bubble" title="Estado: ${estado}">${iconEstado}</div>
-                        <div class="bubble" title="Plataforma: ${plataforma}">${plataforma.charAt(0).toUpperCase()}</div>
-                        <div class="bubble dev-initial" title="Responsable">
-                            ${inicialDev}<span class="dev-full">${responsable.substring(1)}</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        `;
-        projectsArea.appendChild(row);
-    });
-
-    const isAdvanced = viewToggle.checked;
-    toggleViews(isAdvanced);
-}
-
-function toggleViews(isAdvanced) {
-    const classics = document.querySelectorAll('.bar-content-classic');
-    const advanced = document.querySelectorAll('.bar-content-advanced');
-    classics.forEach(el => el.style.display = isAdvanced ? 'none' : 'flex');
-    advanced.forEach(el => el.style.display = isAdvanced ? 'flex' : 'none');
-}
-
-viewToggle.addEventListener('change', (e) => {
-    toggleViews(e.target.checked);
-});
-
-async function initRoadmap() {
-    renderTimelineHeaders();
-    positionTodayLine();
-
-    // TU URL DE IMPLEMENTACIÓN
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxIIREskYhByQ1z6bH7G8IJNHnNfR2esJbhJhwho0UPEEVutqmftQGehcmM3nZHh3iY/exec';
-
-    try {
-        projectsArea.innerHTML = '<div style="padding: 20px; text-align: center; font-weight: 600; color: var(--blue-dark);">Cargando roadmap desde Sheets... 🚀</div>';
-
-        const response = await fetch(API_URL);
-        if (!response.ok) throw new Error('Error en la red');
-        
-        const data = await response.json();
-        
-        // ---> AQUÍ ESTÁ EL DETECTIVE: Imprimimos en consola lo que llega de Sheets
-        console.log("👀 DATOS RECIBIDOS DE SHEETS:", data);
-        
-        renderProjects(data);
-
-    } catch (error) {
-        console.error("Error cargando los datos:", error);
-        projectsArea.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--coral-accent); font-weight: 600;">Error al cargar los datos. Verifica la conexión o la URL en consola.</div>';
-    }
-}
-
-// Arrancamos
-initRoadmap();
+    // 3. Cortamos SOLO los primeros 10 caracteres (YYYY-MM-DD). 
+    // Esto elimina cualquier hora o zona horaria basura que envíe Sheets.
+    const cleanDate = str.substring(0, 10
