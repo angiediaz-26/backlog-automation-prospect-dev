@@ -142,7 +142,7 @@ async function initRoadmap() {
     positionTodayLine();
 
     // TU URL DE IMPLEMENTACIÓN
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwWpXdU_P0_Ehn2iCq3LeEjcg30i52OalzYGf4YSZjMwn6x3gPIwIja2aWTaxo4O__Q/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxIIREskYhByQ1z6bH7G8IJNHnNfR2esJbhJhwho0UPEEVutqmftQGehcmM3nZHh3iY/exec';
 
     try {
         projectsArea.innerHTML = '<div style="padding: 20px; text-align: center; font-weight: 600; color: var(--blue-dark);">Cargando roadmap desde Sheets... 🚀</div>';
