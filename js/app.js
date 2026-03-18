@@ -1,4 +1,4 @@
-const YEAR = new Date().getFullYear(); // 2026 en tu caso
+const YEAR = new Date().getFullYear(); // 2026
 const IS_LEAP = (YEAR % 4 === 0 && YEAR % 100 !== 0) || (YEAR % 400 === 0);
 const DAYS_IN_YEAR = IS_LEAP ? 366 : 365;
 
@@ -46,15 +46,17 @@ function positionTodayLine() {
     }
 }
 
-// NUEVO: Parser de fechas para entender "18/03/2026" o "2026-03-18"
+// Parser de fechas para entender "18/03/2026" (DD/MM/YYYY) o "2026-03-18"
 function parseDateRobust(dateStr) {
     if (!dateStr) return new Date();
-    // Si viene como DD/MM/YYYY desde sheets
-    if (dateStr.includes('/')) {
-        const parts = dateStr.split('/');
+    
+    // Si la fecha viene como DD/MM/YYYY
+    if (String(dateStr).includes('/')) {
+        const parts = String(dateStr).split('/');
         // parts[0] = DD, parts[1] = MM, parts[2] = YYYY
         return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
     }
+    
     // Si viene como YYYY-MM-DD
     return new Date(dateStr + 'T00:00:00');
 }
@@ -78,7 +80,7 @@ function calculateBarPosition(startDateStr, endDateStr) {
 function renderProjects(data) {
     projectsArea.innerHTML = '';
     
-    // OJO: Usamos corchetes para leer las columnas con espacios
+    // Filtramos usando corchetes para aceptar los nombres con espacios
     const validData = data.filter(item => item['FECHA INICIO'] && item['FECHA FIN']);
 
     validData.forEach(item => {
@@ -86,7 +88,7 @@ function renderProjects(data) {
         
         const responsable = item.RESPONSABLE ? String(item.RESPONSABLE).trim() : 'Sin Asignar';
         const inicialDev = responsable.charAt(0).toUpperCase();
-        const proceso = item.PROCESO || 'Sin Título';
+        const proceso = item.PROCESO ? String(item.PROCESO).trim() : 'Sin Título';
         const estado = item.ESTADO ? String(item.ESTADO).trim() : 'Backlog';
         const plataforma = item.PLATAFORMA ? String(item.PLATAFORMA).trim() : '-';
         
@@ -139,7 +141,7 @@ async function initRoadmap() {
     renderTimelineHeaders();
     positionTodayLine();
 
-    // PEGA AQUÍ TU NUEVA URL GENERADA POR EL APPS SCRIPT ACTUALIZADO
+    // TU URL DE IMPLEMENTACIÓN
     const API_URL = 'https://script.google.com/macros/s/AKfycbwWpXdU_P0_Ehn2iCq3LeEjcg30i52OalzYGf4YSZjMwn6x3gPIwIja2aWTaxo4O__Q/exec';
 
     try {
@@ -149,12 +151,17 @@ async function initRoadmap() {
         if (!response.ok) throw new Error('Error en la red');
         
         const data = await response.json();
+        
+        // ---> AQUÍ ESTÁ EL DETECTIVE: Imprimimos en consola lo que llega de Sheets
+        console.log("👀 DATOS RECIBIDOS DE SHEETS:", data);
+        
         renderProjects(data);
 
     } catch (error) {
         console.error("Error cargando los datos:", error);
-        projectsArea.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--coral-accent); font-weight: 600;">Error al cargar los datos. Verifica la conexión o la URL.</div>';
+        projectsArea.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--coral-accent); font-weight: 600;">Error al cargar los datos. Verifica la conexión o la URL en consola.</div>';
     }
 }
 
+// Arrancamos
 initRoadmap();
