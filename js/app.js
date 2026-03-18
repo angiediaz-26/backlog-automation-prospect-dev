@@ -140,7 +140,7 @@ async function initRoadmap() {
     positionTodayLine();
 
     // PEGA AQUÍ TU NUEVA URL GENERADA POR EL APPS SCRIPT ACTUALIZADO
-    const API_URL = 'TU_NUEVA_URL_AQUI_TERMINADA_EN_/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwWpXdU_P0_Ehn2iCq3LeEjcg30i52OalzYGf4YSZjMwn6x3gPIwIja2aWTaxo4O__Q/exec';
 
     try {
         projectsArea.innerHTML = '<div style="padding: 20px; text-align: center; font-weight: 600; color: var(--blue-dark);">Cargando roadmap desde Sheets... 🚀</div>';
