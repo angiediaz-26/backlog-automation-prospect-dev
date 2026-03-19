@@ -13,32 +13,30 @@
 
     <div class="header-controls">
         <h1 class="logo-title">Backlog Automation <span>Prospects</span></h1>
+        
         <div class="toggle-container">
-            <span class="toggle-label">Vista Clásica</span>
+            <span class="toggle-label label-active" id="labelSemanas">Semanas</span>
             <label class="switch">
-                <input type="checkbox" id="viewToggle">
+                <input type="checkbox" id="zoomToggle">
                 <span class="slider"></span>
             </label>
-            <span class="toggle-label">Vista Avanzada</span>
+            <span class="toggle-label label-inactive" id="labelMeses">Meses</span>
         </div>
     </div>
 
     <div class="roadmap-wrapper">
         <div class="timeline-container">
             
-            <div class="timeline-header" id="timelineHeader">
-                </div>
+            <div class="timeline-header" id="timelineHeader"></div>
             
             <div class="today-line" id="todayLine"></div>
 
-            <div class="projects-area" id="projectsArea">
-                </div>
+            <div class="projects-area" id="projectsArea"></div>
 
         </div>
     </div>
 
-    <div id="projectTooltip" class="project-tooltip">
-        </div>
+    <div id="projectTooltip" class="project-tooltip"></div>
 
     <script src="js/app.js"></script>
 </body>
