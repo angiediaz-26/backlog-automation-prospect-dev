@@ -10,7 +10,7 @@
     --font-main: 'Montserrat', sans-serif;
     
     /* MAGIA AQUÍ: Al subir este número, las semanas S1, S2... se hacen más anchas */
-    --timeline-min-width: 1800px; 
+    --timeline-min-width: 2500px; 
 }
 
 /* --- RESET BÁSICO --- */
