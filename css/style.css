@@ -9,8 +9,8 @@
     --shadow-tooltip: 0 8px 24px rgba(0,0,0,0.15);
     --font-main: 'Montserrat', sans-serif;
     
-    /* ¡AJUSTE CRÍTICO DE UX! Reducido de 1400px a 1000px para evitar tanto scroll lateral */
-    --timeline-min-width: 1000px; 
+    /* MAGIA AQUÍ: Al subir este número, las semanas S1, S2... se hacen más anchas */
+    --timeline-min-width: 1800px; 
 }
 
 /* --- RESET BÁSICO --- */
