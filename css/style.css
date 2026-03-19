@@ -9,7 +9,7 @@
     --shadow-tooltip: 0 8px 24px rgba(0,0,0,0.15);
     --font-main: 'Montserrat', sans-serif;
     
-    /* ¡AJUSTE CRÍTICO DE UX! Ancho mínimo comprimido para evitar scroll lateral excesivo */
+    /* ¡AJUSTE CRÍTICO DE UX! Reducido de 1400px a 1000px para evitar tanto scroll lateral */
     --timeline-min-width: 1000px; 
 }
 
@@ -43,17 +43,8 @@ input:checked + .slider:before { transform: translateX(20px); }
 .time-cell { flex: 1; text-align: center; border-right: 1px solid var(--gray-plat); padding: 8px 0; font-size: 12px; font-weight: 600; }
 .time-cell:last-child { border-right: none; }
 
-/* ---> CAMBIO SOLICITADO AQUÍ <--- 
-   Línea vertical MUCHO más gruesa (6px) para Trimestres */
-.row-quarters .time-cell { 
-    border-right: 6px solid var(--blue-dark); /* CAMBIADO DE 3px A 6px */
-    font-weight: 800; 
-    font-size: 14px; 
-    text-transform: uppercase; 
-}
+.row-quarters .time-cell { border-right: 3px solid var(--blue-dark); font-weight: 800; font-size: 14px; text-transform: uppercase; }
 .row-quarters .time-cell:last-child { border-right: none; }
-
-/* Los separadores de meses y semanas permanecen finos para no sobrecargar el diseño */
 .row-months .time-cell { font-weight: 700; color: #4A5568; }
 .row-weeks .time-cell { font-weight: 400; color: #718096; font-size: 11px; }
 
@@ -90,7 +81,7 @@ input:checked + .slider:before { transform: translateX(20px); }
     margin-right: 8px; 
 }
 
-/* Píldora de Iniciales (Vista Clásica) */
+/* --- NUEVA PÍLDORA DE INICIALES --- */
 .bar-content-classic .dev-pill { 
     background: rgba(255,255,255,0.25); 
     padding: 3px 6px; 
@@ -103,7 +94,7 @@ input:checked + .slider:before { transform: translateX(20px); }
     text-align: center;
 }
 
-/* Burbujas Flotantes (Vista Avanzada) */
+/* Burbujas Flotantes (Avanzada) */
 .floating-bubbles { position: absolute; top: -11px; right: -5px; display: flex; gap: 4px; z-index: 2; }
 .bubble { width: 22px; height: 22px; background: white; border: 1px solid var(--gray-plat); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--blue-dark); font-weight: 800; box-shadow: var(--shadow-light); transition: all 0.3s ease; }
 .bubble.dev-initial { overflow: hidden; white-space: nowrap; width: 22px; }
