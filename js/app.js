@@ -1,146 +1,207 @@
-/* --- VARIABLES GLOBALES --- */
-:root {
-    --bg-color: #FFFFFF;
-    --blue-dark: #121E6C;
-    --gray-plat: #E2E8F0;
-    --coral-accent: #FF2847;
-    --tooltip-bg: #1A202C; 
-    --shadow-light: 0 4px 12px rgba(18, 30, 108, 0.04);
-    --shadow-tooltip: 0 8px 24px rgba(0,0,0,0.15);
-    --font-main: 'Montserrat', sans-serif;
+const YEAR = new Date().getFullYear(); 
+const IS_LEAP = (YEAR % 4 === 0 && YEAR % 100 !== 0) || (YEAR % 400 === 0);
+const DAYS_IN_YEAR = IS_LEAP ? 366 : 365;
+
+const timelineHeader = document.getElementById('timelineHeader');
+const todayLine = document.getElementById('todayLine');
+const projectsArea = document.getElementById('projectsArea');
+const viewToggle = document.getElementById('viewToggle');
+const projectTooltip = document.getElementById('projectTooltip'); 
+
+function renderTimelineHeaders() {
+    const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     
-    /* MATEMÁTICA CORREGIDA: 48 semanas x 45px = 2160px. 
-       Usamos 2200px para garantizar celdas anchas en S1, S2, S3... */
-    --timeline-min-width: 2200px; 
+    let qHTML = '<div class="time-row row-quarters">';
+    quarters.forEach(q => qHTML += `<div class="time-cell">${q}</div>`);
+    qHTML += '</div>';
+
+    let mHTML = '<div class="time-row row-months">';
+    months.forEach(m => mHTML += `<div class="time-cell">${m}</div>`);
+    mHTML += '</div>';
+
+    let wHTML = '<div class="time-row row-weeks">';
+    for(let i=0; i<12; i++) {
+        wHTML += `<div class="time-cell">S1</div><div class="time-cell">S2</div><div class="time-cell">S3</div><div class="time-cell">S4</div>`;
+    }
+    wHTML += '</div>';
+
+    timelineHeader.innerHTML = qHTML + mHTML + wHTML;
 }
 
-/* --- RESET BÁSICO --- */
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font-main); background-color: var(--bg-color); color: var(--blue-dark); overflow-x: hidden; position: relative; }
-
-/* --- CONTROLES Y HEADER --- */
-.header-controls { display: flex; justify-content: space-between; align-items: center; padding: 24px 32px; border-bottom: 1px solid var(--gray-plat); background-color: var(--bg-color); position: relative; z-index: 50; }
-.logo-title { font-weight: 800; font-size: 24px; }
-.logo-title span { color: var(--coral-accent); }
-
-/* Toggle Switch UI */
-.toggle-container { display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 14px; }
-.switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-.switch input { opacity: 0; width: 0; height: 0; }
-.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--gray-plat); transition: .4s; border-radius: 24px; }
-.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-input:checked + .slider { background-color: var(--coral-accent); }
-input:checked + .slider:before { transform: translateX(20px); }
-
-/* --- CONTENEDOR TIMELINE --- */
-.roadmap-wrapper { width: 100%; overflow-x: auto; padding-bottom: 40px; }
-.roadmap-wrapper::-webkit-scrollbar { height: 8px; }
-.roadmap-wrapper::-webkit-scrollbar-thumb { background: var(--gray-plat); border-radius: 4px; }
-.timeline-container { min-width: max(100%, var(--timeline-min-width)); position: relative; padding-top: 20px; }
-
-/* --- CABECERAS DE TIEMPO --- */
-.timeline-header { border-bottom: 2px solid var(--gray-plat); position: sticky; top: 0; background: var(--bg-color); z-index: 10; }
-.time-row { display: flex; width: 100%; }
-
-/* Estructura base de celdas (sin forzar anchos que rompan flexbox) */
-.time-cell { 
-    flex: 1; 
-    text-align: center; 
-    border-right: 1px solid var(--gray-plat); 
-    padding: 8px 0; 
-    font-size: 12px; 
-    font-weight: 600;
-}
-.time-cell:last-child { border-right: none; }
-
-/* Borde grueso (6px) para los Trimestres */
-.row-quarters .time-cell { 
-    border-right: 6px solid var(--blue-dark); 
-    font-weight: 800; 
-    font-size: 14px; 
-    text-transform: uppercase; 
-}
-.row-quarters .time-cell:last-child { border-right: none; }
-
-.row-months .time-cell { font-weight: 700; color: #4A5568; }
-
-/* Semanas (S1, S2, S3) */
-.row-weeks .time-cell { 
-    font-weight: 400; 
-    color: #718096; 
-    font-size: 11px; 
+function getDayOfYear(date) {
+    const start = new Date(date.getFullYear(), 0, 0);
+    const diff = date - start;
+    const oneDay = 1000 * 60 * 60 * 24;
+    return Math.floor(diff / oneDay);
 }
 
-/* --- LÍNEA DE HOY --- */
-.today-line { position: absolute; top: 0; bottom: 0; width: 2px; background-color: var(--coral-accent); z-index: 5; pointer-events: none; }
-.today-line::before { content: 'HOY'; position: absolute; top: -15px; left: -14px; background: var(--coral-accent); color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
-
-/* --- BARRAS DE PROYECTO --- */
-.projects-area { position: relative; width: 100%; min-height: 400px; margin-top: 20px; }
-.project-row { position: relative; height: 50px; border-bottom: 1px dashed var(--gray-plat); width: 100%; }
-
-.project-bar {
-    position: absolute; height: 32px; top: 9px;
-    background-color: var(--blue-dark); color: white;
-    border-radius: 6px; box-shadow: var(--shadow-light);
-    display: flex; align-items: center; padding: 0 12px;
-    font-size: 12px; font-weight: 600; cursor: pointer;
-    transition: all 0.3s ease;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+function positionTodayLine() {
+    const today = new Date(); 
+    const dayOfYear = getDayOfYear(today);
+    if (today.getFullYear() === YEAR) {
+        const percentage = (dayOfYear / DAYS_IN_YEAR) * 100;
+        todayLine.style.left = `${percentage}%`;
+    } else {
+        todayLine.style.display = 'none';
+    }
 }
 
-.project-bar.estado-prod { opacity: 0.45; filter: grayscale(15%); }
-.project-bar.estado-prod:hover { opacity: 1; filter: grayscale(0%); z-index: 20; }
-
-.bar-content-classic, .bar-content-advanced { display: flex; align-items: center; width: 100%; justify-content: space-between; }
-.bar-content-advanced { display: none; } 
-
-.truncate { 
-    white-space: nowrap; 
-    overflow: hidden; 
-    text-overflow: ellipsis; 
-    min-width: 0; 
-    flex-grow: 1; 
-    margin-right: 8px; 
+function parseDateRobust(dateStr) {
+    if (!dateStr) return new Date();
+    let str = String(dateStr).trim();
+    if (str.includes('/')) {
+        const parts = str.split('/');
+        str = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    const cleanDate = str.substring(0, 10);
+    return new Date(`${cleanDate}T00:00:00`);
 }
 
-/* Píldora de Iniciales (Vista Clásica) */
-.bar-content-classic .dev-pill { 
-    background: rgba(255,255,255,0.25); 
-    padding: 3px 6px; 
-    border-radius: 4px; 
-    font-size: 10px; 
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    flex-shrink: 0; 
-    min-width: 24px;
-    text-align: center;
+function calculateBarPosition(startDateStr, endDateStr) {
+    const start = parseDateRobust(startDateStr);
+    const end = parseDateRobust(endDateStr);
+    const startDay = getDayOfYear(start);
+    const endDay = getDayOfYear(end);
+    let leftPercent = (startDay / DAYS_IN_YEAR) * 100;
+    let widthPercent = ((endDay - startDay) / DAYS_IN_YEAR) * 100;
+
+    if (leftPercent < 0) leftPercent = 0;
+    if (widthPercent < 1) widthPercent = 1; 
+    return { left: leftPercent, width: widthPercent };
 }
 
-/* Burbujas Flotantes (Vista Avanzada) */
-.floating-bubbles { position: absolute; top: -11px; right: -5px; display: flex; gap: 4px; z-index: 2; }
-.bubble { width: 22px; height: 22px; background: white; border: 1px solid var(--gray-plat); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--blue-dark); font-weight: 800; box-shadow: var(--shadow-light); transition: all 0.3s ease; }
-.bubble.dev-initial { overflow: hidden; white-space: nowrap; width: 22px; }
-.project-bar:hover .bubble.dev-initial { width: auto; padding: 0 8px; border-radius: 11px; }
-.project-bar:hover .dev-full { display: inline; }
-.dev-full { display: none; font-size: 10px; margin-left: 4px; font-weight: 600; }
-
-/* --- ESTILOS DEL TOOLTIP INTELIGENTE --- */
-.project-tooltip {
-    display: none; 
-    position: fixed; 
-    background-color: var(--tooltip-bg);
-    color: white;
-    padding: 16px;
-    border-radius: 8px;
-    box-shadow: var(--shadow-tooltip);
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 1.6;
-    z-index: 1000;
-    pointer-events: none; 
-    max-width: 300px; 
+// NUEVO: Función para extraer hasta 2 iniciales del nombre
+function getInitials(name) {
+    if (!name || name === 'Sin Asignar') return '-';
+    // Limpiamos espacios extra y separamos por palabras
+    const words = name.trim().split(' ').filter(w => w.length > 0);
+    // Si solo hay un nombre, sacamos 1 letra. Si hay más, sacamos 2 letras.
+    if (words.length === 1) return words[0].charAt(0).toUpperCase();
+    return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
 }
-.tooltip-title { font-weight: 700; font-size: 13px; margin-bottom: 10px; white-space: normal; }
-.tooltip-area-line, .tooltip-status-line { margin-top: 4px; }
-.tooltip-area-label, .tooltip-status-label { font-weight: 600; margin-right: 4px; }
+
+function renderProjects(data) {
+    projectsArea.innerHTML = '';
+    const validData = data.filter(item => item['FECHA INICIO'] && item['FECHA FIN']);
+
+    validData.forEach(item => {
+        const pos = calculateBarPosition(item['FECHA INICIO'], item['FECHA FIN']);
+        
+        const responsable = item.RESPONSABLE ? String(item.RESPONSABLE).trim() : 'Sin Asignar';
+        const inicialesDev = getInitials(responsable); // Usamos la nueva función (Ej: AL)
+        const proceso = item.PROCESO ? String(item.PROCESO).trim() : 'Sin Título';
+        const estado = item.ESTADO ? String(item.ESTADO).trim() : 'Backlog';
+        const plataforma = item.PLATAFORMA ? String(item.PLATAFORMA).trim() : '-';
+        const area = item.ÁREA ? String(item.ÁREA).trim() : '-'; 
+        
+        const isProd = estado.toLowerCase() === 'prod';
+        const iconEstado = isProd ? '✓' : (estado.toLowerCase().includes('curso') ? '⚙' : '⏳');
+        
+        const row = document.createElement('div');
+        row.className = 'project-row';
+        
+        row.innerHTML = `
+            <div class="project-bar ${isProd ? 'estado-prod' : ''}" 
+                 style="left: ${pos.left}%; width: ${pos.width}%;"
+                 data-full-proceso="${proceso}" 
+                 data-area="${area}" 
+                 data-estado="${estado}">
+                
+                <div class="bar-content-classic">
+                    <span class="truncate-classic truncate" title="${proceso}">${proceso}</span>
+                    <span class="dev-pill" title="${responsable}">${inicialesDev}</span>
+                </div>
+
+                <div class="bar-content-advanced">
+                    <span class="truncate-advanced truncate" title="${proceso}">${proceso}</span>
+                    <div class="floating-bubbles">
+                        <div class="bubble" title="Estado: ${estado}">${iconEstado}</div>
+                        <div class="bubble" title="Plataforma: ${plataforma}">${plataforma.charAt(0).toUpperCase()}</div>
+                        <div class="bubble dev-initial" title="Responsable">
+                            ${inicialesDev.charAt(0)}<span class="dev-full">${responsable.substring(1)}</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        `;
+        projectsArea.appendChild(row);
+    });
+
+    const isAdvanced = viewToggle.checked;
+    toggleViews(isAdvanced);
+}
+
+// Detector de Trunación y Tooltip
+projectsArea.addEventListener('mouseover', (e) => {
+    const projectBar = e.target.closest('.project-bar');
+    if (!projectBar) return;
+
+    const truncateSpan = projectBar.querySelector('.bar-content-classic .truncate-classic');
+    if (!truncateSpan) return;
+
+    if (truncateSpan.scrollWidth > truncateSpan.clientWidth) {
+        const fullProceso = projectBar.getAttribute('data-full-proceso');
+        const area = projectBar.getAttribute('data-area');
+        const estado = projectBar.getAttribute('data-estado');
+
+        projectTooltip.innerHTML = `
+            <div class="tooltip-title">${fullProceso}</div>
+            <div class="tooltip-area-line"><span class="tooltip-area-label">Área:</span> ${area}</div>
+            <div class="tooltip-status-line"><span class="tooltip-status-label">Estado:</span> ${estado}</div>
+        `;
+
+        const barRect = projectBar.getBoundingClientRect();
+        const tooltipWidth = projectTooltip.offsetWidth;
+        const tooltipHeight = projectTooltip.offsetHeight;
+
+        let tooltipLeft = barRect.left + (barRect.width / 2) - (tooltipWidth / 2);
+        let tooltipTop = barRect.bottom + 10;
+        
+        if (tooltipLeft + tooltipWidth > window.innerWidth) tooltipLeft = window.innerWidth - tooltipWidth - 20;
+        if (tooltipLeft < 0) tooltipLeft = 20;
+        if (tooltipTop + tooltipHeight > window.innerHeight) tooltipTop = barRect.top - tooltipHeight - 10;
+
+        projectTooltip.style.left = `${tooltipLeft}px`;
+        projectTooltip.style.top = `${tooltipTop}px`;
+        projectTooltip.style.display = 'block'; 
+    }
+});
+
+projectsArea.addEventListener('mouseout', (e) => {
+    const projectBar = e.target.closest('.project-bar');
+    if (projectBar) projectTooltip.style.display = 'none';
+});
+
+function toggleViews(isAdvanced) {
+    const classics = document.querySelectorAll('.bar-content-classic');
+    const advanced = document.querySelectorAll('.bar-content-advanced');
+    
+    projectTooltip.style.display = 'none';
+    
+    classics.forEach(el => el.style.display = isAdvanced ? 'none' : 'flex');
+    advanced.forEach(el => el.style.display = isAdvanced ? 'flex' : 'none');
+}
+
+viewToggle.addEventListener('change', (e) => toggleViews(e.target.checked));
+
+async function initRoadmap() {
+    renderTimelineHeaders();
+    positionTodayLine();
+
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxIIREskYhByQ1z6bH7G8IJNHnNfR2esJbhJhwho0UPEEVutqmftQGehcmM3nZHh3iY/exec';
+
+    try {
+        projectsArea.innerHTML = '<div style="padding: 20px; text-align: center; font-weight: 600; color: var(--blue-dark);">Cargando roadmap desde Sheets... 🚀</div>';
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error('Error en la red');
+        const data = await response.json();
+        renderProjects(data);
+    } catch (error) {
+        console.error("Error cargando los datos:", error);
+        projectsArea.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--coral-accent); font-weight: 600;">Error al cargar los datos. Verifica la conexión o la URL en consola.</div>';
+    }
+}
+
+initRoadmap();
