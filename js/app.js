@@ -8,6 +8,7 @@ const timelineHeader = document.getElementById('timelineHeader');
 const todayLine = document.getElementById('todayLine');
 const projectsArea = document.getElementById('projectsArea');
 const viewToggle = document.getElementById('viewToggle');
+const projectTooltip = document.getElementById('projectTooltip'); // Referencia al Tooltip
 
 // --- 2. RENDERIZAR CABECERAS (Q, Meses, Semanas) ---
 function renderTimelineHeaders() {
@@ -50,7 +51,7 @@ function positionTodayLine() {
     }
 }
 
-// NUEVO: Parser de fechas a prueba de balas para Google Sheets
+// Parser de fechas a prueba de balas para Google Sheets
 function parseDateRobust(dateStr) {
     if (!dateStr) return new Date();
     
@@ -89,7 +90,7 @@ function calculateBarPosition(startDateStr, endDateStr) {
     return { left: leftPercent, width: widthPercent };
 }
 
-// --- 4. RENDERIZAR PROYECTOS ---
+// --- 4. RENDERIZAR PROYECTOS (Ajustado para el Tooltip) ---
 function renderProjects(data) {
     projectsArea.innerHTML = '';
     
@@ -99,11 +100,13 @@ function renderProjects(data) {
     validData.forEach(item => {
         const pos = calculateBarPosition(item['FECHA INICIO'], item['FECHA FIN']);
         
+        // Manejo seguro por si algunos campos vienen vacíos de Sheets
         const responsable = item.RESPONSABLE ? String(item.RESPONSABLE).trim() : 'Sin Asignar';
         const inicialDev = responsable.charAt(0).toUpperCase();
         const proceso = item.PROCESO ? String(item.PROCESO).trim() : 'Sin Título';
         const estado = item.ESTADO ? String(item.ESTADO).trim() : 'Backlog';
         const plataforma = item.PLATAFORMA ? String(item.PLATAFORMA).trim() : '-';
+        const area = item.ÁREA ? String(item.ÁREA).trim() : '-'; // Obtenemos el Área
         
         const isProd = estado.toLowerCase() === 'prod';
         const iconEstado = isProd ? '✓' : (estado.toLowerCase().includes('curso') ? '⚙' : '⏳');
@@ -111,16 +114,21 @@ function renderProjects(data) {
         const row = document.createElement('div');
         row.className = 'project-row';
         
+        // ¡NUEVO! Guardamos la información detallada como atributos de datos para el detector JS
         row.innerHTML = `
-            <div class="project-bar ${isProd ? 'estado-prod' : ''}" style="left: ${pos.left}%; width: ${pos.width}%;">
+            <div class="project-bar ${isProd ? 'estado-prod' : ''}" 
+                 style="left: ${pos.left}%; width: ${pos.width}%;"
+                 data-full-proceso="${proceso}" 
+                 data-area="${area}" 
+                 data-estado="${estado}">
                 
                 <div class="bar-content-classic">
-                    <span class="truncate" title="${proceso}">${proceso}</span>
+                    <span class="truncate-classic truncate" title="${proceso}">${proceso}</span>
                     <span class="dev-pill" title="${responsable}">${responsable}</span>
                 </div>
 
                 <div class="bar-content-advanced">
-                    <span class="truncate" title="${proceso}">${proceso}</span>
+                    <span class="truncate-advanced truncate" title="${proceso}">${proceso}</span>
                     <div class="floating-bubbles">
                         <div class="bubble" title="Estado: ${estado}">${iconEstado}</div>
                         <div class="bubble" title="Plataforma: ${plataforma}">${plataforma.charAt(0).toUpperCase()}</div>
@@ -140,10 +148,85 @@ function renderProjects(data) {
     toggleViews(isAdvanced);
 }
 
-// --- 5. TOGGLE VISTAS ---
+// --- 5. LÓGICA DEL DETECTOR DE TRUNACIÓN Y TOOLTIP INTELIGENTE (TIPO image_5.png) ---
+// Usamos event delegation para mejor rendimiento
+projectsArea.addEventListener('mouseover', (e) => {
+    // Buscamos si el hover está sobre una barra de proyecto
+    const projectBar = e.target.closest('.project-bar');
+    if (!projectBar) return;
+
+    // Obtenemos el elemento que contiene el nombre del proyecto en la Vista Clásica
+    const truncateSpan = projectBar.querySelector('.bar-content-classic .truncate-classic');
+    if (!truncateSpan) return;
+
+    // ---> DETECTOR DE TRUNACIÓN (CRÍTICO) <---
+    // Comprobamos si el ancho de scroll es mayor que el ancho de cliente.
+    // Esto nos dice si el nombre NO se está mostrando completo.
+    if (truncateSpan.scrollWidth > truncateSpan.clientWidth) {
+        
+        // Obtenemos la información detallada guardada en los atributos de datos
+        const fullProceso = projectBar.getAttribute('data-full-proceso');
+        const area = projectBar.getAttribute('data-area');
+        const estado = projectBar.getAttribute('data-estado');
+
+        // Construimos dinámicamente el HTML interno del Tooltip con la estructura de image_5.png
+        projectTooltip.innerHTML = `
+            <div class="tooltip-title">${fullProceso}</div>
+            <div class="tooltip-area-line"><span class="tooltip-area-label">Área:</span> ${area}</div>
+            <div class="tooltip-status-line"><span class="tooltip-status-label">Estado:</span> ${estado}</div>
+        `;
+
+        // Calculamos el posicionamiento dinámico del tooltip
+        const barRect = projectBar.getBoundingClientRect();
+        const tooltipWidth = projectTooltip.offsetWidth;
+        const tooltipHeight = projectTooltip.offsetHeight;
+
+        // Posicionamiento por defecto: directamente debajo de la barra
+        let tooltipLeft = barRect.left + (barRect.width / 2) - (tooltipWidth / 2);
+        let tooltipTop = barRect.bottom + 10;
+
+        // --- CONTROL DE LÍMITES DE PANTALLA ---
+        // Vital para proyectores: Evitamos que el tooltip se salga de la pantalla.
+        
+        // Límite Derecho
+        if (tooltipLeft + tooltipWidth > window.innerWidth) {
+            tooltipLeft = window.innerWidth - tooltipWidth - 20;
+        }
+
+        // Límite Izquierdo
+        if (tooltipLeft < 0) {
+            tooltipLeft = 20;
+        }
+
+        // Límite Inferior
+        if (tooltipTop + tooltipHeight > window.innerHeight) {
+            // Si no cabe debajo, lo posicionamos arriba de la barra
+            tooltipTop = barRect.top - tooltipHeight - 10;
+        }
+
+        // Aplicamos las coordenadas calculadas
+        projectTooltip.style.left = `${tooltipLeft}px`;
+        projectTooltip.style.top = `${tooltipTop}px`;
+        projectTooltip.style.display = 'block'; // Mostramos el Tooltip
+    }
+});
+
+// Ocultar el Tooltip al salir del hover
+projectsArea.addEventListener('mouseout', (e) => {
+    const projectBar = e.target.closest('.project-bar');
+    if (projectBar) {
+        projectTooltip.style.display = 'none';
+    }
+});
+
+// --- 6. TOGGLE VISTAS ---
 function toggleViews(isAdvanced) {
     const classics = document.querySelectorAll('.bar-content-classic');
     const advanced = document.querySelectorAll('.bar-content-advanced');
+    
+    // Ocultamos el tooltip al cambiar de vista
+    projectTooltip.style.display = 'none';
+    
     classics.forEach(el => el.style.display = isAdvanced ? 'none' : 'flex');
     advanced.forEach(el => el.style.display = isAdvanced ? 'flex' : 'none');
 }
@@ -152,7 +235,7 @@ viewToggle.addEventListener('change', (e) => {
     toggleViews(e.target.checked);
 });
 
-// --- 6. LLAMADA REAL A LA API (FETCH) ---
+// --- 7. LLAMADA REAL A LA API (FETCH) ---
 async function initRoadmap() {
     renderTimelineHeaders();
     positionTodayLine();
