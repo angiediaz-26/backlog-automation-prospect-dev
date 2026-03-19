@@ -5,8 +5,14 @@ const DAYS_IN_YEAR = IS_LEAP ? 366 : 365;
 const timelineHeader = document.getElementById('timelineHeader');
 const todayLine = document.getElementById('todayLine');
 const projectsArea = document.getElementById('projectsArea');
-const viewToggle = document.getElementById('viewToggle');
+const zoomToggle = document.getElementById('zoomToggle'); 
+const labelSemanas = document.getElementById('labelSemanas');
+const labelMeses = document.getElementById('labelMeses');
 const projectTooltip = document.getElementById('projectTooltip'); 
+
+// Constantes de Zoom
+const WIDTH_SEMANAS = '2500px';
+const WIDTH_MESES = '1000px';
 
 function renderTimelineHeaders() {
     const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
@@ -20,7 +26,7 @@ function renderTimelineHeaders() {
     months.forEach(m => mHTML += `<div class="time-cell">${m}</div>`);
     mHTML += '</div>';
 
-    let wHTML = '<div class="time-row row-weeks">';
+    let wHTML = '<div class="time-row row-weeks" id="rowWeeks">';
     for(let i=0; i<12; i++) {
         wHTML += `<div class="time-cell">S1</div><div class="time-cell">S2</div><div class="time-cell">S3</div><div class="time-cell">S4</div>`;
     }
@@ -71,12 +77,9 @@ function calculateBarPosition(startDateStr, endDateStr) {
     return { left: leftPercent, width: widthPercent };
 }
 
-// NUEVO: Función para extraer hasta 2 iniciales del nombre
 function getInitials(name) {
     if (!name || name === 'Sin Asignar') return '-';
-    // Limpiamos espacios extra y separamos por palabras
     const words = name.trim().split(' ').filter(w => w.length > 0);
-    // Si solo hay un nombre, sacamos 1 letra. Si hay más, sacamos 2 letras.
     if (words.length === 1) return words[0].charAt(0).toUpperCase();
     return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
 }
@@ -89,14 +92,12 @@ function renderProjects(data) {
         const pos = calculateBarPosition(item['FECHA INICIO'], item['FECHA FIN']);
         
         const responsable = item.RESPONSABLE ? String(item.RESPONSABLE).trim() : 'Sin Asignar';
-        const inicialesDev = getInitials(responsable); // Usamos la nueva función (Ej: AL)
+        const inicialesDev = getInitials(responsable); 
         const proceso = item.PROCESO ? String(item.PROCESO).trim() : 'Sin Título';
         const estado = item.ESTADO ? String(item.ESTADO).trim() : 'Backlog';
-        const plataforma = item.PLATAFORMA ? String(item.PLATAFORMA).trim() : '-';
         const area = item.ÁREA ? String(item.ÁREA).trim() : '-'; 
         
         const isProd = estado.toLowerCase() === 'prod';
-        const iconEstado = isProd ? '✓' : (estado.toLowerCase().includes('curso') ? '⚙' : '⏳');
         
         const row = document.createElement('div');
         row.className = 'project-row';
@@ -112,33 +113,44 @@ function renderProjects(data) {
                     <span class="truncate-classic truncate" title="${proceso}">${proceso}</span>
                     <span class="dev-pill" title="${responsable}">${inicialesDev}</span>
                 </div>
-
-                <div class="bar-content-advanced">
-                    <span class="truncate-advanced truncate" title="${proceso}">${proceso}</span>
-                    <div class="floating-bubbles">
-                        <div class="bubble" title="Estado: ${estado}">${iconEstado}</div>
-                        <div class="bubble" title="Plataforma: ${plataforma}">${plataforma.charAt(0).toUpperCase()}</div>
-                        <div class="bubble dev-initial" title="Responsable">
-                            ${inicialesDev.charAt(0)}<span class="dev-full">${responsable.substring(1)}</span>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         `;
         projectsArea.appendChild(row);
     });
-
-    const isAdvanced = viewToggle.checked;
-    toggleViews(isAdvanced);
 }
 
-// Detector de Trunación y Tooltip
+// LÓGICA DE ZOOM Y ANIMACIÓN
+function updateZoomLevel() {
+    const isMonthsView = zoomToggle.checked;
+    const root = document.documentElement;
+    const timelineHeaderElement = document.getElementById('timelineHeader');
+
+    if (isMonthsView) {
+        // Vista Meses: Comprimimos el ancho y ocultamos semanas
+        root.style.setProperty('--timeline-current-width', WIDTH_MESES);
+        timelineHeaderElement.classList.add('view-months');
+        labelMeses.classList.add('label-active');
+        labelMeses.classList.remove('label-inactive');
+        labelSemanas.classList.add('label-inactive');
+        labelSemanas.classList.remove('label-active');
+    } else {
+        // Vista Semanas: Expandimos a 2500px y mostramos semanas
+        root.style.setProperty('--timeline-current-width', WIDTH_SEMANAS);
+        timelineHeaderElement.classList.remove('view-months');
+        labelSemanas.classList.add('label-active');
+        labelSemanas.classList.remove('label-inactive');
+        labelMeses.classList.add('label-inactive');
+        labelMeses.classList.remove('label-active');
+    }
+}
+
+zoomToggle.addEventListener('change', updateZoomLevel);
+
+// Tooltip Logic
 projectsArea.addEventListener('mouseover', (e) => {
     const projectBar = e.target.closest('.project-bar');
     if (!projectBar) return;
-
-    const truncateSpan = projectBar.querySelector('.bar-content-classic .truncate-classic');
+    const truncateSpan = projectBar.querySelector('.truncate-classic');
     if (!truncateSpan) return;
 
     if (truncateSpan.scrollWidth > truncateSpan.clientWidth) {
@@ -174,21 +186,12 @@ projectsArea.addEventListener('mouseout', (e) => {
     if (projectBar) projectTooltip.style.display = 'none';
 });
 
-function toggleViews(isAdvanced) {
-    const classics = document.querySelectorAll('.bar-content-classic');
-    const advanced = document.querySelectorAll('.bar-content-advanced');
-    
-    projectTooltip.style.display = 'none';
-    
-    classics.forEach(el => el.style.display = isAdvanced ? 'none' : 'flex');
-    advanced.forEach(el => el.style.display = isAdvanced ? 'flex' : 'none');
-}
-
-viewToggle.addEventListener('change', (e) => toggleViews(e.target.checked));
-
 async function initRoadmap() {
     renderTimelineHeaders();
     positionTodayLine();
+    
+    // Inicializar estado visual del toggle
+    updateZoomLevel();
 
     const API_URL = 'https://script.google.com/macros/s/AKfycbxIIREskYhByQ1z6bH7G8IJNHnNfR2esJbhJhwho0UPEEVutqmftQGehcmM3nZHh3iY/exec';
 
