@@ -4,13 +4,13 @@
     --blue-dark: #121E6C;
     --gray-plat: #E2E8F0;
     --coral-accent: #FF2847;
-    --tooltip-bg: #1A202C; /* Fondo oscuro tipo image_5.png */
+    --tooltip-bg: #1A202C; 
     --shadow-light: 0 4px 12px rgba(18, 30, 108, 0.04);
     --shadow-tooltip: 0 8px 24px rgba(0,0,0,0.15);
     --font-main: 'Montserrat', sans-serif;
     
-    /* Configuración del Timeline (Responsividad Crítica) */
-    --timeline-min-width: 1400px; /* Ancho mínimo para mantener weeks en una línea */
+    /* ¡AJUSTE CRÍTICO DE UX! Reducido de 1400px a 1000px para evitar tanto scroll lateral */
+    --timeline-min-width: 1000px; 
 }
 
 /* --- RESET BÁSICO --- */
@@ -31,7 +31,7 @@ body { font-family: var(--font-main); background-color: var(--bg-color); color: 
 input:checked + .slider { background-color: var(--coral-accent); }
 input:checked + .slider:before { transform: translateX(20px); }
 
-/* --- CONTENEDOR TIMELINE (Responsividad Crítica) --- */
+/* --- CONTENEDOR TIMELINE --- */
 .roadmap-wrapper { width: 100%; overflow-x: auto; padding-bottom: 40px; }
 .roadmap-wrapper::-webkit-scrollbar { height: 8px; }
 .roadmap-wrapper::-webkit-scrollbar-thumb { background: var(--gray-plat); border-radius: 4px; }
@@ -43,7 +43,6 @@ input:checked + .slider:before { transform: translateX(20px); }
 .time-cell { flex: 1; text-align: center; border-right: 1px solid var(--gray-plat); padding: 8px 0; font-size: 12px; font-weight: 600; }
 .time-cell:last-child { border-right: none; }
 
-/* Línea gruesa para Trimestres */
 .row-quarters .time-cell { border-right: 3px solid var(--blue-dark); font-weight: 800; font-size: 14px; text-transform: uppercase; }
 .row-quarters .time-cell:last-child { border-right: none; }
 .row-months .time-cell { font-weight: 700; color: #4A5568; }
@@ -67,50 +66,46 @@ input:checked + .slider:before { transform: translateX(20px); }
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* Estado Prod (Filtro y Opacidad) */
 .project-bar.estado-prod { opacity: 0.45; filter: grayscale(15%); }
 .project-bar.estado-prod:hover { opacity: 1; filter: grayscale(0%); z-index: 20; }
 
-/* --- VISTA CLÁSICA VS AVANZADA --- */
 .bar-content-classic, .bar-content-advanced { display: flex; align-items: center; width: 100%; justify-content: space-between; }
-.bar-content-advanced { display: none; } /* Oculto por defecto */
+.bar-content-advanced { display: none; } 
 
-/* --- AJUSTE DE TRUNCACIÓN (CRÍTICO) --- */
 .truncate { 
     white-space: nowrap; 
     overflow: hidden; 
     text-overflow: ellipsis; 
-    min-width: 0; /* Vital para que flex y text-overflow funcionen */
-    flex-grow: 1; /* Prioriza que el nombre del proyecto ocupe todo el espacio posible */
+    min-width: 0; 
+    flex-grow: 1; 
     margin-right: 8px; 
 }
 
-/* Píldora Dev (Clásica) - Relajamos la trunación agresiva */
+/* --- NUEVA PÍLDORA DE INICIALES --- */
 .bar-content-classic .dev-pill { 
-    background: rgba(255,255,255,0.2); 
-    padding: 2px 8px; 
-    border-radius: 12px; 
+    background: rgba(255,255,255,0.25); 
+    padding: 3px 6px; 
+    border-radius: 4px; 
     font-size: 10px; 
-    flex-shrink: 0; /* Evita que el nombre del dev colapse el nombre del proyecto */
-    max-width: 150px; /* Permitimos nombres más largos que antes */
-    white-space: nowrap; 
-    overflow: hidden; 
-    text-overflow: ellipsis; 
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    flex-shrink: 0; 
+    min-width: 24px;
+    text-align: center;
 }
 
 /* Burbujas Flotantes (Avanzada) */
 .floating-bubbles { position: absolute; top: -11px; right: -5px; display: flex; gap: 4px; z-index: 2; }
 .bubble { width: 22px; height: 22px; background: white; border: 1px solid var(--gray-plat); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--blue-dark); font-weight: 800; box-shadow: var(--shadow-light); transition: all 0.3s ease; }
-/* Expansión del Dev */
 .bubble.dev-initial { overflow: hidden; white-space: nowrap; width: 22px; }
 .project-bar:hover .bubble.dev-initial { width: auto; padding: 0 8px; border-radius: 11px; }
 .project-bar:hover .dev-full { display: inline; }
 .dev-full { display: none; font-size: 10px; margin-left: 4px; font-weight: 600; }
 
-/* --- ESTILOS DEL TOOLTIP INTELIGENTE (tipo image_5.png) --- */
+/* --- ESTILOS DEL TOOLTIP INTELIGENTE --- */
 .project-tooltip {
-    display: none; /* Oculto por defecto */
-    position: fixed; /* Posicionamiento dinámico por JS */
+    display: none; 
+    position: fixed; 
     background-color: var(--tooltip-bg);
     color: white;
     padding: 16px;
@@ -120,23 +115,9 @@ input:checked + .slider:before { transform: translateX(20px); }
     font-weight: 400;
     line-height: 1.6;
     z-index: 1000;
-    pointer-events: none; /* No interfiere con el hover */
-    max-width: 300px; /* Evita tooltips infinitos */
+    pointer-events: none; 
+    max-width: 300px; 
 }
-
-/* Estructura Interna del Tooltip */
-.tooltip-title {
-    font-weight: 700;
-    font-size: 13px;
-    margin-bottom: 10px;
-    white-space: normal; /* Permite que el nombre haga salto de línea si es muy largo */
-}
-
-.tooltip-area-line, .tooltip-status-line {
-    margin-top: 4px;
-}
-
-.tooltip-area-label, .tooltip-status-label {
-    font-weight: 600;
-    margin-right: 4px;
-}
+.tooltip-title { font-weight: 700; font-size: 13px; margin-bottom: 10px; white-space: normal; }
+.tooltip-area-line, .tooltip-status-line { margin-top: 4px; }
+.tooltip-area-label, .tooltip-status-label { font-weight: 600; margin-right: 4px; }
