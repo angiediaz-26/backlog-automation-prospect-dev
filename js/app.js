@@ -9,8 +9,9 @@
     --shadow-tooltip: 0 8px 24px rgba(0,0,0,0.15);
     --font-main: 'Montserrat', sans-serif;
     
-    /* Ampliado a 1600px para que el calendario tenga más espacio y respire */
-    --timeline-min-width: 1600px; 
+    /* MATEMÁTICA CORREGIDA: 48 semanas x 45px = 2160px. 
+       Usamos 2200px para garantizar celdas anchas en S1, S2, S3... */
+    --timeline-min-width: 2200px; 
 }
 
 /* --- RESET BÁSICO --- */
@@ -41,7 +42,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 .timeline-header { border-bottom: 2px solid var(--gray-plat); position: sticky; top: 0; background: var(--bg-color); z-index: 10; }
 .time-row { display: flex; width: 100%; }
 
-/* Ajuste de ancho mínimo en las celdas para que no se aplasten */
+/* Estructura base de celdas (sin forzar anchos que rompan flexbox) */
 .time-cell { 
     flex: 1; 
     text-align: center; 
@@ -49,7 +50,6 @@ input:checked + .slider:before { transform: translateX(20px); }
     padding: 8px 0; 
     font-size: 12px; 
     font-weight: 600;
-    min-width: 35px; 
 }
 .time-cell:last-child { border-right: none; }
 
@@ -63,7 +63,13 @@ input:checked + .slider:before { transform: translateX(20px); }
 .row-quarters .time-cell:last-child { border-right: none; }
 
 .row-months .time-cell { font-weight: 700; color: #4A5568; }
-.row-weeks .time-cell { font-weight: 400; color: #718096; font-size: 11px; }
+
+/* Semanas (S1, S2, S3) */
+.row-weeks .time-cell { 
+    font-weight: 400; 
+    color: #718096; 
+    font-size: 11px; 
+}
 
 /* --- LÍNEA DE HOY --- */
 .today-line { position: absolute; top: 0; bottom: 0; width: 2px; background-color: var(--coral-accent); z-index: 5; pointer-events: none; }
