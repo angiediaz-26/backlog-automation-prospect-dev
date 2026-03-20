@@ -10,7 +10,6 @@ const labelSemanas = document.getElementById('labelSemanas');
 const labelMeses = document.getElementById('labelMeses');
 const projectTooltip = document.getElementById('projectTooltip'); 
 
-// Constantes de Zoom
 const WIDTH_SEMANAS = '2500px';
 const WIDTH_MESES = '1000px';
 
@@ -97,17 +96,31 @@ function renderProjects(data) {
         const estado = item.ESTADO ? String(item.ESTADO).trim() : 'Backlog';
         const area = item.ÁREA ? String(item.ÁREA).trim() : '-'; 
         
+        // --- NUEVO: CAPTURAMOS LOS PORCENTAJES DE SHEETS ---
+        // Manejamos el caso de que venga vacío o si Sheets manda un número decimal en lugar del texto con %
+        let vaInicial = item['% VA INICIAL'];
+        let vaFinal = item['% VA FINAL'];
+        
+        vaInicial = (vaInicial !== undefined && vaInicial !== '') ? String(vaInicial).trim() : '-';
+        vaFinal = (vaFinal !== undefined && vaFinal !== '') ? String(vaFinal).trim() : '-';
+        // Si Sheets lo envía como un decimal (ej. 0.54 en vez de 54%), agregamos el símbolo de forma simple.
+        if (vaInicial !== '-' && !vaInicial.includes('%') && !isNaN(vaInicial)) vaInicial = `${(parseFloat(vaInicial) * 100).toFixed(0)}%`;
+        if (vaFinal !== '-' && !vaFinal.includes('%') && !isNaN(vaFinal)) vaFinal = `${(parseFloat(vaFinal) * 100).toFixed(0)}%`;
+        
         const isProd = estado.toLowerCase() === 'prod';
         
         const row = document.createElement('div');
         row.className = 'project-row';
         
+        // --- NUEVO: GUARDAMOS LOS DATOS EN LA BARRA PARA EL TOOLTIP ---
         row.innerHTML = `
             <div class="project-bar ${isProd ? 'estado-prod' : ''}" 
                  style="left: ${pos.left}%; width: ${pos.width}%;"
                  data-full-proceso="${proceso}" 
                  data-area="${area}" 
-                 data-estado="${estado}">
+                 data-estado="${estado}"
+                 data-va-inicial="${vaInicial}"
+                 data-va-final="${vaFinal}">
                 
                 <div class="bar-content-classic">
                     <span class="truncate-classic truncate" title="${proceso}">${proceso}</span>
@@ -126,7 +139,6 @@ function updateZoomLevel() {
     const timelineHeaderElement = document.getElementById('timelineHeader');
 
     if (isMonthsView) {
-        // Vista Meses: Comprimimos el ancho y ocultamos semanas
         root.style.setProperty('--timeline-current-width', WIDTH_MESES);
         timelineHeaderElement.classList.add('view-months');
         labelMeses.classList.add('label-active');
@@ -134,7 +146,6 @@ function updateZoomLevel() {
         labelSemanas.classList.add('label-inactive');
         labelSemanas.classList.remove('label-active');
     } else {
-        // Vista Semanas: Expandimos a 2500px y mostramos semanas
         root.style.setProperty('--timeline-current-width', WIDTH_SEMANAS);
         timelineHeaderElement.classList.remove('view-months');
         labelSemanas.classList.add('label-active');
@@ -146,7 +157,7 @@ function updateZoomLevel() {
 
 zoomToggle.addEventListener('change', updateZoomLevel);
 
-// Tooltip Logic
+// LÓGICA DEL TOOLTIP INTELIGENTE
 projectsArea.addEventListener('mouseover', (e) => {
     const projectBar = e.target.closest('.project-bar');
     if (!projectBar) return;
@@ -157,11 +168,17 @@ projectsArea.addEventListener('mouseover', (e) => {
         const fullProceso = projectBar.getAttribute('data-full-proceso');
         const area = projectBar.getAttribute('data-area');
         const estado = projectBar.getAttribute('data-estado');
+        // --- NUEVO: OBTENEMOS LOS PORCENTAJES DEL HTML ---
+        const vaInicial = projectBar.getAttribute('data-va-inicial');
+        const vaFinal = projectBar.getAttribute('data-va-final');
 
+        // --- NUEVO: INSERTAMOS LA INFORMACIÓN EN LA PESTAÑA NEGRA ---
         projectTooltip.innerHTML = `
             <div class="tooltip-title">${fullProceso}</div>
             <div class="tooltip-area-line"><span class="tooltip-area-label">Área:</span> ${area}</div>
             <div class="tooltip-status-line"><span class="tooltip-status-label">Estado:</span> ${estado}</div>
+            <div class="tooltip-status-line"><span class="tooltip-status-label">% VA Inicial:</span> ${vaInicial}</div>
+            <div class="tooltip-status-line"><span class="tooltip-status-label">% VA Final:</span> ${vaFinal}</div>
         `;
 
         const barRect = projectBar.getBoundingClientRect();
@@ -190,7 +207,6 @@ async function initRoadmap() {
     renderTimelineHeaders();
     positionTodayLine();
     
-    // Inicializar estado visual del toggle
     updateZoomLevel();
 
     const API_URL = 'https://script.google.com/macros/s/AKfycbxIIREskYhByQ1z6bH7G8IJNHnNfR2esJbhJhwho0UPEEVutqmftQGehcmM3nZHh3iY/exec';
