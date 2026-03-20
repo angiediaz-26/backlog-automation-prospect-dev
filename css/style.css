@@ -9,8 +9,8 @@
     --shadow-tooltip: 0 8px 24px rgba(0,0,0,0.15);
     --font-main: 'Montserrat', sans-serif;
     
-    /* Calendario Ancho (2200px) */
-    --timeline-min-width: 2200px; 
+    /* Ancho dinámico controlado por JS para la animación de Zoom */
+    --timeline-current-width: 2500px; 
 }
 
 /* --- RESET BÁSICO --- */
@@ -19,10 +19,15 @@ body { font-family: var(--font-main); background-color: var(--bg-color); color: 
 
 /* --- CONTROLES Y HEADER --- */
 .header-controls { display: flex; justify-content: space-between; align-items: center; padding: 24px 32px; border-bottom: 1px solid var(--gray-plat); background-color: var(--bg-color); position: relative; z-index: 50; }
-.logo-title { font-weight: 800; font-size: 24px; }
-.logo-title span { color: var(--coral-accent); }
 
-/* --- NUEVO ESTILO DEL TOGGLE (Semanas/Meses) --- */
+.logo-title { 
+    font-weight: 800; font-size: 24px; 
+    display: flex; align-items: center; gap: 12px; 
+}
+.logo-title span { color: var(--coral-accent); margin-left: -8px; }
+.title-icon { height: 28px; width: auto; object-fit: contain; }
+
+/* Toggle Switch UI (Zoom Semanas/Meses) */
 .toggle-container { 
     display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 14px; 
     border: 1px solid var(--gray-plat); padding: 8px 16px; border-radius: 8px;
@@ -38,35 +43,36 @@ body { font-family: var(--font-main); background-color: var(--bg-color); color: 
 input:checked + .slider { background-color: var(--coral-accent); } 
 input:checked + .slider:before { transform: translateX(20px); }
 
-/* --- CONTENEDOR TIMELINE --- */
+/* --- CONTENEDOR TIMELINE (Animado) --- */
 .roadmap-wrapper { width: 100%; overflow-x: auto; padding-bottom: 40px; }
 .roadmap-wrapper::-webkit-scrollbar { height: 8px; }
 .roadmap-wrapper::-webkit-scrollbar-thumb { background: var(--gray-plat); border-radius: 4px; }
-/* Transición suave al cambiar el ancho vía JS */
-.timeline-container { min-width: max(100%, var(--timeline-min-width)); position: relative; padding-top: 20px; transition: min-width 0.5s ease; }
+.timeline-container { 
+    min-width: max(100%, var(--timeline-current-width)); 
+    position: relative; padding-top: 20px;
+    transition: min-width 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
+}
 
 /* --- CABECERAS DE TIEMPO --- */
 .timeline-header { border-bottom: 2px solid var(--gray-plat); position: sticky; top: 0; background: var(--bg-color); z-index: 10; }
 .time-row { display: flex; width: 100%; }
-
 .time-cell { flex: 1; text-align: center; border-right: 1px solid var(--gray-plat); padding: 8px 0; font-size: 12px; font-weight: 600; }
 .time-cell:last-child { border-right: none; }
 
-/* Borde de 6px */
+/* Borde grueso de 6px para trimestres */
 .row-quarters .time-cell { border-right: 6px solid var(--blue-dark); font-weight: 800; font-size: 14px; text-transform: uppercase; }
 .row-quarters .time-cell:last-child { border-right: none; }
-
 .row-months .time-cell { font-weight: 700; color: #4A5568; }
 
-/* Animación para ocultar la fila de Semanas */
+/* Animación de la fila de Semanas */
 .row-weeks { transition: all 0.5s ease-out; opacity: 1; max-height: 40px; overflow: hidden; }
 .row-weeks .time-cell { font-weight: 400; color: #718096; font-size: 11px; }
 
-/* Ocultar semanas vía JS */
+/* Clase que aplicará JS para ocultar las semanas (Modo Meses) */
 .view-months .row-weeks { opacity: 0; max-height: 0; padding: 0; border: none; }
 
 /* --- LÍNEA DE HOY --- */
-.today-line { position: absolute; top: 0; bottom: 0; width: 2px; background-color: var(--coral-accent); z-index: 5; pointer-events: none; }
+.today-line { position: absolute; top: 0; bottom: 0; width: 2px; background-color: var(--coral-accent); z-index: 5; pointer-events: none; transition: left 0.6s ease; }
 .today-line::before { content: 'HOY'; position: absolute; top: -15px; left: -14px; background: var(--coral-accent); color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
 
 /* --- BARRAS DE PROYECTO --- */
@@ -79,7 +85,7 @@ input:checked + .slider:before { transform: translateX(20px); }
     border-radius: 6px; box-shadow: var(--shadow-light);
     display: flex; align-items: center; padding: 0 12px;
     font-size: 12px; font-weight: 600; cursor: pointer;
-    transition: left 0.5s ease, width 0.5s ease;
+    transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1), width 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
@@ -87,8 +93,6 @@ input:checked + .slider:before { transform: translateX(20px); }
 .project-bar.estado-prod:hover { opacity: 1; filter: grayscale(0%); z-index: 20; }
 
 .bar-content-classic { display: flex; align-items: center; width: 100%; justify-content: space-between; }
-.bar-content-advanced { display: none; } 
-
 .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex-grow: 1; margin-right: 8px; }
 
 .bar-content-classic .dev-pill { 
